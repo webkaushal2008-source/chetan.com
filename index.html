@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebKaushal Calculator</title>
+  <link rel="website icon" type="png"
+  href="images/Webakushal_Logo_In_Circle-removebg-preview.png">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <h1>WebKaushal Calculator</h1>
+      <div class="header-buttons">
+        <button id="disclaimerBtn" class="btn header-btn">
+          <i class='bx bx-info-circle'></i> Disclaimer
+        </button>
+        <button id="themeToggleBtn" class="btn header-btn">
+          <i class='bx bx-moon'></i> Dark Mode
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="form-box">
+      <form onsubmit="return false;">
+        <div class="Symbol-input">
+          <input type="text" id="symbolNameInput" placeholder="Enter Symbol Name" class="symbol-name-input" />
+        </div>
+
+        <div class="option-row header-row">
+          <div class="col-title">Strike Price</div>
+          <div class="col-title">Put Value</div>
+          <div class="col-title">Call Value</div>
+          <div class="col-title">Final Value</div>
+        </div>
+
+        <div class="option-rows" id="optionRows"></div>
+
+        <div class="add-row-container">
+          <button type="button" class="btn" id="addRowBtn">
+            <i class='bx bx-plus'></i> Add Strike
+          </button>
+        </div>
+
+        <div class="button-group">
+          <button type="button" class="btn" id="calculateBtn">
+            <i class='bx bx-calculator'></i> Calculate
+          </button>
+          <button type="button" class="btn" id="graphBtn" disabled>
+            <i class='bx bx-show'></i> Show Graph
+          </button>
+          <button type="button" class="btn" onclick="downloadPDF()">
+            <i class='bx bx-download'></i> Download
+          </button>
+          <button type="button" class="btn" onclick="showHistory()">
+            <i class='bx bx-history'></i> History
+          </button>
+          <button type="button" class="btn" onclick="refreshPage()">
+            <i class='bx bx-refresh'></i> Refresh
+          </button>
+        </div>
+
+        <div class="chart-container" id="chartArea">
+          <canvas id="ivChart"></canvas>
+        </div>
+
+        <div id="historyList" class="history-list">
+          <h3>Calculation History</h3>
+          <div id="historyItems"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <p>© 2023 WebKaushal Calculator By Kaushal. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#" class="footer-link">Terms</a>
+        <a href="#" class="footer-link">Privacy</a>
+        <a href="#" class="footer-link">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
