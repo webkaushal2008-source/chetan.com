@@ -7,7 +7,7 @@ let strikePrices = [];
 let ivDiffs = [];
 let putIVs = [];
 let callIVs = [];
-let rowCount = 11;   // default rows (5 OTM, 1 ATM, 5 ITM)
+let rowCount = 11;   // default rows (5 ITM, 1 ATM, 5 OTM)
 
 // --------------- DOM Elements ------------------------------------
 const optionRowsContainer = document.getElementById("optionRows");
@@ -52,7 +52,6 @@ function toggleTheme() {
 
 // --------------- Disclaimer Page --------------------------------
 function showDisclaimer() {
-  // Save current calculator state
   const calculatorState = {
     inputs: getCurrentInputValues(),
     symbol: getSymbolName(),
@@ -65,7 +64,6 @@ function showDisclaimer() {
   };
   localStorage.setItem('calculatorState', JSON.stringify(calculatorState));
 
-  // Create disclaimer page
   const isDark = calculatorState.isDark;
   
   document.body.innerHTML = `
@@ -85,7 +83,6 @@ function showDisclaimer() {
     </div>
   `;
 
-  // Add styles
   const style = document.createElement('style');
   style.textContent = `
     body {
@@ -136,7 +133,6 @@ function showDisclaimer() {
   `;
   document.head.appendChild(style);
 
-  // Add event listener for back button
   document.getElementById('backToCalculatorBtn').addEventListener('click', () => {
     window.location.reload();
   });
@@ -168,8 +164,8 @@ function createOptionRows(savedData = null) {
 
   for (let i = 0; i < rowCount; i++) {
     const strikePlaceholder =
-      i < atmIndex ? "----- OTM -----" :
-      i === atmIndex ? "----- ATM -----" : "----- ITM -----";
+      i < atmIndex ? "----- ITM -----" :
+      i === atmIndex ? "----- ATM -----" : "----- OTM -----";
 
     const row = document.createElement("div");
     row.className = "option-row";
@@ -182,8 +178,8 @@ function createOptionRows(savedData = null) {
 
     row.innerHTML = `
       <input type="number" id="strike-${i}" placeholder="${strikePlaceholder}" value="${strikeVal}" />
-      <input type="number" id="putiv-${i}" placeholder="Put Value %" value="${putVal}" />
-      <input type="number" id="calliv-${i}" placeholder="Call Value %" value="${callVal}" />
+      <input type="number" id="putiv-${i}" placeholder="Call Value %" value="${putVal}" />
+      <input type="number" id="calliv-${i}" placeholder="Put Value %" value="${callVal}" />
       <span id="diff-${i}" class="${diffClass}">${diffText}</span>
     `;
     optionRowsContainer.appendChild(row);
@@ -201,13 +197,16 @@ function addOptionRowsPair() {
   createOptionRows(currentData);
 }
 
-// --------------- Calculation --------------------------------------
+// --------------- Calculation (UPDATED WITH TOTALS) ----------------
 function calculateIV() {
   strikePrices = [];
   ivDiffs = [];
   putIVs = [];
   callIVs = [];
   let validData = false;
+
+  let totalPositive = 0;
+  let totalNegative = 0;
 
   for (let i = 0; i < rowCount; i++) {
     const strikeInput = document.getElementById(`strike-${i}`);
@@ -220,7 +219,6 @@ function calculateIV() {
     const callIV = parseFloat(callInput.value);
 
     if (!isNaN(strike) && !isNaN(callIV) && !isNaN(putIV)) {
-      // Now dividing the difference by 100
       const diff = +((callIV - putIV) / 100).toFixed(2);
 
       strikePrices.push(strike);
@@ -230,6 +228,10 @@ function calculateIV() {
 
       diffCell.innerText = diff.toFixed(2);
       diffCell.className = diff >= 0 ? "positive" : "negative";
+
+      if (diff >= 0) totalPositive += diff;
+      else totalNegative += diff;
+
       validData = true;
     } else {
       diffCell.innerText = "-";
@@ -240,6 +242,25 @@ function calculateIV() {
   }
 
   graphBtn.disabled = !validData;
+  showTotals(totalPositive, totalNegative); // ✅ Show totals
+}
+
+function showTotals(totalPositive, totalNegative) {
+  let totalsDiv = document.getElementById("totals");
+  if (!totalsDiv) {
+    totalsDiv = document.createElement("div");
+    totalsDiv.id = "totals";
+    totalsDiv.style.marginTop = "10px";
+    totalsDiv.style.fontWeight = "bold";
+    totalsDiv.style.fontSize = "20px";
+    totalsDiv.style.textAlign = "center";
+    // ✅ Append totals div after Add Row button
+    addRowBtn.parentElement.insertBefore(totalsDiv, addRowBtn.nextSibling);
+  }
+  totalsDiv.innerHTML = `
+    Total Green (Positive): <span style="color:rgba(4, 155, 135, 1)">${totalPositive.toFixed(2)}</span> | 
+    Total Red (Negative): <span style="color:rgb(212, 16, 16)">${totalNegative.toFixed(2)}</span>
+  `;
 }
 
 // --------------- Chart Rendering ----------------------------------
@@ -280,12 +301,12 @@ function drawGraphOnly() {
           data: ivDiffs,
           type: "line",
           borderWidth: 2,
-          pointBackgroundColor: ivDiffs.map(d => d >= 0 ? "#10b981" : "#ef4444"), // ✅ point colors
+          pointBackgroundColor: ivDiffs.map(d => d >= 0 ? "#10b981" : "#ef4444"),
           fill: false,
           tension: 0.3,
           yAxisID: "y",
           segment: {
-            borderColor: ctx => ctx.p0.parsed.y >= 0 ? "#10b981" : "#ef4444"  // ✅ dynamic line color
+            borderColor: ctx => ctx.p0.parsed.y >= 0 ? "#10b981" : "#ef4444"
           }
         }
       ]
