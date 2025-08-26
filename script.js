@@ -277,7 +277,7 @@ function drawGraphOnly() {
   const now = new Date();
   const dateStr = now.toLocaleString(undefined, {
     year: "numeric", month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true
   });
 
   const isDark = body.classList.contains("dark-theme");
@@ -323,6 +323,15 @@ function drawGraphOnly() {
           font: { size: 14, weight: "normal" },
           color: textColor,
           padding: { top: 10, bottom: 30 }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const value = context.raw;
+              const writer = value >= 0 ? "Put Writer" : "Call Writer";
+              return `Strike: ${context.label} | Diff: ${value} | ${writer}`;
+            }
+          }
         }
       },
       scales: {
@@ -384,26 +393,38 @@ function drawGraphOnly() {
   document.getElementById("chartArea").scrollIntoView({ behavior: "smooth" });
 }
 
+// ------------------ Graph Download PDF ------------------
+function downloadChart() {
+  if (!chart) {
+    alert("Please generate chart first!");
+    return;
+  }
+
+  // Convert chart to image
+  const imgData = chart.toBase64Image();
+
+  // Create PDF object
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("landscape"); // landscape for wide charts
+
+  // Fit chart inside the PDF page
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imgProps = pdf.getImageProperties(imgData);
+  const imgWidth = pageWidth - 20;  // margin
+  const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+  pdf.addImage(imgData, "PNG", 10, 20, imgWidth, imgHeight);
+
+  // Save as PDF
+  pdf.save("WebKaushal_Chart.pdf");
+}
+
+// ------------------ Show Graph ------------------
 function showGraph() {
   calculateIV();
   drawGraphOnly();
   saveToHistory();
-}
-
-// --------------- PDF Download -------------------------------------
-async function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const chartArea = document.getElementById("chartArea");
-  const pdf = new jsPDF("l", "mm", [841, 594]);
-
-  await html2canvas(chartArea, { scale: 4 }).then(canvas => {
-    const imgData = canvas.toDataURL("image/png");
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = 841;
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
-    pdf.save("webkaushal.pdf");
-  });
 }
 
 // --------------- History Management --------------------------------
