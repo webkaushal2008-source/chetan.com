@@ -1,4 +1,4 @@
-// Webkaushal Calculator Script 
+// WebKaushal Calculator Script (English, complete)
 // ------------------------------------------------------------------
 
 // --------------- Global State -------------------------------------
@@ -7,7 +7,7 @@ let strikePrices = [];
 let ivDiffs = [];
 let putIVs = [];
 let callIVs = [];
-let rowCount = 11;   // default rows (5 ITM, 1 ATM, 5 OTM)
+let rowCount = 11; // default rows (5 ITM, 1 ATM, 5 OTM)
 
 // --------------- DOM Elements ------------------------------------
 const optionRowsContainer = document.getElementById("optionRows");
@@ -21,33 +21,28 @@ const body = document.body;
 
 // --------------- Theme Management --------------------------------
 function initTheme() {
-  const savedTheme = localStorage.getItem("theme") || 
-                    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const savedTheme = localStorage.getItem("theme") ||
+    (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 
   if (savedTheme === "dark") {
     body.classList.add("dark-theme");
-    themeToggleBtn.innerHTML = `<i class='bx bx-sun'></i> Light Mode`;
+    if (themeToggleBtn) themeToggleBtn.innerHTML = `<i class='bx bx-sun'></i> Light Mode`;
   } else {
     body.classList.remove("dark-theme");
-    themeToggleBtn.innerHTML = `<i class='bx bx-moon'></i> Dark Mode`;
+    if (themeToggleBtn) themeToggleBtn.innerHTML = `<i class='bx bx-moon'></i> Dark Mode`;
   }
 }
 
 function toggleTheme() {
   body.classList.toggle("dark-theme");
   const isDark = body.classList.contains("dark-theme");
-  
-  if (isDark) {
-    themeToggleBtn.innerHTML = `<i class='bx bx-sun'></i> Light Mode`;
-    localStorage.setItem("theme", "dark");
-  } else {
-    themeToggleBtn.innerHTML = `<i class='bx bx-moon'></i> Dark Mode`;
-    localStorage.setItem("theme", "light");
+
+  if (themeToggleBtn) {
+    themeToggleBtn.innerHTML = isDark ? `<i class='bx bx-sun'></i> Light Mode` : `<i class='bx bx-moon'></i> Dark Mode`;
   }
-  
-  if (chart) {
-    drawGraphOnly();
-  }
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+
+  if (chart) drawGraphOnly(); // re-render chart to adjust colors
 }
 
 // --------------- Disclaimer Page --------------------------------
@@ -191,13 +186,14 @@ function addOptionRowsPair() {
   const atmIndex = Math.floor(rowCount / 2);
 
   rowCount += 2;
+  // Insert two blank rows around ATM index so layout preserves ATM center
   currentData.splice(atmIndex, 0, { strike: "", putIV: "", callIV: "", diffText: "-", diffClass: "" });
   currentData.splice(atmIndex + 2, 0, { strike: "", putIV: "", callIV: "", diffText: "-", diffClass: "" });
 
   createOptionRows(currentData);
 }
 
-// --------------- Calculation (UPDATED WITH TOTALS) ----------------
+// --------------- Calculation (with totals) ------------------------
 function calculateIV() {
   strikePrices = [];
   ivDiffs = [];
@@ -214,11 +210,12 @@ function calculateIV() {
     const callInput = document.getElementById(`calliv-${i}`);
     const diffCell = document.getElementById(`diff-${i}`);
 
-    const strike = parseFloat(strikeInput.value);
-    const putIV = parseFloat(putInput.value);
-    const callIV = parseFloat(callInput.value);
+    const strike = parseFloat(strikeInput?.value);
+    const putIV = parseFloat(putInput?.value);
+    const callIV = parseFloat(callInput?.value);
 
     if (!isNaN(strike) && !isNaN(callIV) && !isNaN(putIV)) {
+      // difference scaled to reasonable units (you used /100 previously)
       const diff = +((callIV - putIV) / 100).toFixed(2);
 
       strikePrices.push(strike);
@@ -234,15 +231,17 @@ function calculateIV() {
 
       validData = true;
     } else {
-      diffCell.innerText = "-";
-      diffCell.className = "";
+      if (diffCell) {
+        diffCell.innerText = "-";
+        diffCell.className = "";
+      }
       putIVs.push(null);
       callIVs.push(null);
     }
   }
 
-  graphBtn.disabled = !validData;
-  showTotals(totalPositive, totalNegative); // ✅ Show totals
+  if (graphBtn) graphBtn.disabled = !validData;
+  showTotals(totalPositive, totalNegative);
 }
 
 function showTotals(totalPositive, totalNegative) {
@@ -254,18 +253,18 @@ function showTotals(totalPositive, totalNegative) {
     totalsDiv.style.fontWeight = "bold";
     totalsDiv.style.fontSize = "20px";
     totalsDiv.style.textAlign = "center";
-    // ✅ Append totals div after Add Row button
+    // Insert totals after Add Row button
     addRowBtn.parentElement.insertBefore(totalsDiv, addRowBtn.nextSibling);
   }
   totalsDiv.innerHTML = `
-    Total Green (Positive): <span style="color:rgba(4, 155, 135, 1)">${totalPositive.toFixed(2)}</span> | 
-    Total Red (Negative): <span style="color:rgb(212, 16, 16)">${totalNegative.toFixed(2)}</span>
+    Total Green (Positive): <span style="color:var(--positive-color)">${totalPositive.toFixed(2)}</span> | 
+    Total Red (Negative): <span style="color:var(--negative-color)">${totalNegative.toFixed(2)}</span>
   `;
 }
 
 // --------------- Chart Rendering ----------------------------------
 function drawGraphOnly() {
-  if (strikePrices.length === 0 || ivDiffs.length === 0) {
+  if (!strikePrices.length || !ivDiffs.length) {
     alert("Please calculate values first!");
     return;
   }
@@ -282,7 +281,7 @@ function drawGraphOnly() {
 
   const isDark = body.classList.contains("dark-theme");
   const textColor = isDark ? "#ffffff" : "#666";
-  const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+  const gridColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
 
   chart = new Chart(ctx, {
     type: "bar",
@@ -293,8 +292,7 @@ function drawGraphOnly() {
           label: "Value Difference",
           data: ivDiffs,
           backgroundColor: ivDiffs.map(d => d >= 0 ? "#10b981" : "#ef4444"),
-          borderRadius: 10,
-          yAxisID: "y",
+          borderRadius: 8
         },
         {
           label: "Trend Line",
@@ -304,7 +302,6 @@ function drawGraphOnly() {
           pointBackgroundColor: ivDiffs.map(d => d >= 0 ? "#10b981" : "#ef4444"),
           fill: false,
           tension: 0.3,
-          yAxisID: "y",
           segment: {
             borderColor: ctx => ctx.p0.parsed.y >= 0 ? "#10b981" : "#ef4444"
           }
@@ -322,7 +319,7 @@ function drawGraphOnly() {
           text: [dateStr],
           font: { size: 14, weight: "normal" },
           color: textColor,
-          padding: { top: 10, bottom: 30 }
+          padding: { top: 10, bottom: 20 }
         },
         tooltip: {
           callbacks: {
@@ -336,91 +333,58 @@ function drawGraphOnly() {
       },
       scales: {
         x: {
-          title: { 
-            display: true, 
-            text: "Strike Price",
-            color: textColor
-          },
-          ticks: { 
-            autoSkip: false, 
-            maxRotation: 90, 
-            minRotation: 45,
-            color: textColor
-          },
-          grid: { 
-            color: gridColor,
-            drawBorder: false
-          }
+          title: { display: true, text: "Strike Price", color: textColor },
+          ticks: { autoSkip: false, maxRotation: 90, minRotation: 45, color: textColor },
+          grid: { color: gridColor, drawBorder: false }
         },
         y: {
-          title: { 
-            display: true, 
-            text: "Value Difference (WebKaushal)",
-            color: textColor
-          },
+          title: { display: true, text: "Value Difference (WebKaushal)", color: textColor },
           beginAtZero: false,
-          ticks: {
-            color: textColor
-          },
-          grid: { 
-            color: gridColor,
-            drawBorder: false
-          },
+          ticks: { color: textColor },
+          grid: { color: gridColor, drawBorder: false }
         }
       }
     },
     plugins: [{
       id: "centerSymbolNameTitle",
-      beforeDraw: (chart) => {
+      beforeDraw: (chartInstance) => {
         if (!symbolName) return;
-        const { ctx, width } = chart;
-        const titleOpts = chart.options.plugins.title;
-        const topPadding = titleOpts.padding?.top || 0;
-        const titleFontSize = titleOpts.font.size || 14;
-        const yPos = topPadding + titleFontSize + 10;
-
-        ctx.save();
-        ctx.font = "bold 20px Poppins, Arial";
-        ctx.fillStyle = textColor;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        ctx.fillText(symbolName, width / 2, yPos);
-        ctx.restore();
+        const { ctx: c, width } = chartInstance;
+        c.save();
+        c.font = "bold 20px Poppins, Arial";
+        c.fillStyle = textColor;
+        c.textAlign = "center";
+        c.textBaseline = "top";
+        c.fillText(symbolName, width / 2, 6);
+        c.restore();
       }
     }]
   });
 
-  document.getElementById("chartArea").scrollIntoView({ behavior: "smooth" });
+  // scroll chart into view
+  const chartArea = document.getElementById("chartArea");
+  if (chartArea) chartArea.scrollIntoView({ behavior: "smooth" });
 }
 
-// ------------------ Graph Download PDF ------------------
-function downloadChart() {
-  if (!chart) {
-    alert("Please generate chart first!");
-    return;
-  }
-
-  // Convert chart to image
-  const imgData = chart.toBase64Image();
-
-  // Create PDF object
+// ================= Download PDF =================
+async function downloadPDF() {
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF("landscape"); // landscape for wide charts
+  const element = document.getElementById("chartArea");
 
-  // Fit chart inside the PDF page
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const imgProps = pdf.getImageProperties(imgData);
-  const imgWidth = pageWidth - 20;  // margin
-  const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+  // Capture chart area
+  const canvas = await html2canvas(element, { scale: 2 });
+  const imgData = canvas.toDataURL("image/png");
 
-  pdf.addImage(imgData, "PNG", 10, 20, imgWidth, imgHeight);
+  // Create PDF
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-  // Save as PDF
-  pdf.save("WebKaushal_Chart.pdf");
+  pdf.addImage(imgData, "PNG", 10, 10, pdfWidth - 20, pdfHeight);
+  pdf.save("WebKaushal_Calculator.pdf");
 }
 
-// ------------------ Show Graph ------------------
+// ------------------ Show Graph (calculate -> draw -> save history) ------------------
 function showGraph() {
   calculateIV();
   drawGraphOnly();
@@ -435,10 +399,14 @@ function saveToHistory() {
     strikePrices: [...strikePrices],
     ivDiffs: [...ivDiffs],
     putIVs: [...putIVs],
-    callIVs: [...callIVs],
+    callIVs: [...callIVs]
   };
 
-  html2canvas(document.getElementById("chartArea"), { scale: 2 }).then(canvas => {
+  // capture chart snapshot and save to localStorage
+  const chartArea = document.getElementById("chartArea");
+  if (!chartArea) return;
+
+  html2canvas(chartArea, { scale: 2 }).then(canvas => {
     data.img = canvas.toDataURL("image/png");
     const history = JSON.parse(localStorage.getItem("ivHistory") || "[]");
     history.unshift(data);
@@ -450,8 +418,9 @@ function saveToHistory() {
 function showHistory() {
   const historyDiv = document.getElementById("historyList");
   const itemsDiv = document.getElementById("historyItems");
-  itemsDiv.innerHTML = "";
+  if (!historyDiv || !itemsDiv) return;
 
+  itemsDiv.innerHTML = "";
   const history = JSON.parse(localStorage.getItem("ivHistory") || "[]");
 
   if (history.length === 0) {
@@ -471,20 +440,30 @@ function showHistory() {
           ${symbolName ? `<div><strong>Symbol:</strong> ${symbolName}</div>` : ""}
           <div><small>Strike Prices: ${entry.strikePrices.join(", ")}</small></div>
         </div>
-        <button class="btn small-delete" onclick="deleteHistoryEntry(${index}, event)">
+        <button class="btn small-delete" data-index="${index}">
           <i class='bx bx-trash'></i>
         </button>
       `;
 
-      div.querySelector("img").onclick = () => loadHistoryEntry(index);
-      div.querySelector("div").onclick = () => loadHistoryEntry(index);
+      // click handlers for load and delete
+      const imgEl = div.querySelector("img");
+      const infoDiv = div.querySelector("div");
+      const delBtn = div.querySelector(".small-delete");
+
+      imgEl && (imgEl.onclick = () => loadHistoryEntry(index));
+      infoDiv && (infoDiv.onclick = () => loadHistoryEntry(index));
+      delBtn && (delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteHistoryEntry(index);
+      }));
+
       itemsDiv.appendChild(div);
     });
 
     const deleteAllBtn = document.createElement("button");
     deleteAllBtn.className = "btn delete-btn";
     deleteAllBtn.innerHTML = `<i class='bx bx-trash'></i> Delete All History`;
-    deleteAllBtn.onclick = clearHistory;
+    deleteAllBtn.addEventListener("click", clearHistory);
     itemsDiv.appendChild(deleteAllBtn);
   }
 
@@ -492,8 +471,7 @@ function showHistory() {
   historyDiv.scrollIntoView({ behavior: "smooth" });
 }
 
-function deleteHistoryEntry(index, event) {
-  event.stopPropagation();
+function deleteHistoryEntry(index) {
   const history = JSON.parse(localStorage.getItem("ivHistory") || "[]");
   history.splice(index, 1);
   localStorage.setItem("ivHistory", JSON.stringify(history));
@@ -514,17 +492,13 @@ function loadHistoryEntry(index) {
 
   if (entry.strikePrices.length !== rowCount) {
     rowCount = entry.strikePrices.length;
-
-    const savedData = [];
-    for (let i = 0; i < rowCount; i++) {
-      savedData.push({
-        strike: entry.strikePrices[i] ?? "",
-        putIV: entry.putIVs ? entry.putIVs[i] ?? "" : "",
-        callIV: entry.callIVs ? entry.callIVs[i] ?? "" : "",
-        diffText: (entry.ivDiffs[i] !== undefined) ? entry.ivDiffs[i].toFixed(2) : "-",
-        diffClass: (entry.ivDiffs[i] >= 0) ? "positive" : "negative"
-      });
-    }
+    const savedData = entry.strikePrices.map((s, i) => ({
+      strike: s ?? "",
+      putIV: entry.putIVs ? entry.putIVs[i] ?? "" : "",
+      callIV: entry.callIVs ? entry.callIVs[i] ?? "" : "",
+      diffText: (entry.ivDiffs[i] !== undefined) ? entry.ivDiffs[i].toFixed(2) : "-",
+      diffClass: (entry.ivDiffs[i] >= 0) ? "positive" : "negative"
+    }));
     createOptionRows(savedData);
   } else {
     for (let i = 0; i < rowCount; i++) {
@@ -532,8 +506,10 @@ function loadHistoryEntry(index) {
       document.getElementById(`putiv-${i}`).value = entry.putIVs ? entry.putIVs[i] ?? "" : "";
       document.getElementById(`calliv-${i}`).value = entry.callIVs ? entry.callIVs[i] ?? "" : "";
       const diffCell = document.getElementById(`diff-${i}`);
-      diffCell.innerText = (entry.ivDiffs[i] !== undefined) ? entry.ivDiffs[i].toFixed(2) : "-";
-      diffCell.className = (entry.ivDiffs[i] >= 0) ? "positive" : "negative";
+      if (diffCell) {
+        diffCell.innerText = (entry.ivDiffs[i] !== undefined) ? entry.ivDiffs[i].toFixed(2) : "-";
+        diffCell.className = (entry.ivDiffs[i] >= 0) ? "positive" : "negative";
+      }
     }
   }
 
@@ -547,6 +523,7 @@ function loadHistoryEntry(index) {
   drawGraphOnly();
 }
 
+// --------------- Misc ---------------------------------------------
 function refreshPage() {
   window.location.reload();
 }
@@ -556,19 +533,18 @@ function restoreCalculatorState() {
   const savedState = localStorage.getItem('calculatorState');
   if (savedState) {
     const state = JSON.parse(savedState);
-    
-    rowCount = state.rowCount;
+
+    rowCount = state.rowCount || rowCount;
     strikePrices = state.strikePrices || [];
     ivDiffs = state.ivDiffs || [];
     putIVs = state.putIVs || [];
     callIVs = state.callIVs || [];
-    
+
     if (symbolNameInput) symbolNameInput.value = state.symbol || "";
-    
-    createOptionRows(state.inputs);
-    
+
+    createOptionRows(state.inputs || null);
     localStorage.removeItem('calculatorState');
-    
+
     if (strikePrices.length > 0) {
       drawGraphOnly();
     }
@@ -576,19 +552,18 @@ function restoreCalculatorState() {
 }
 
 // --------------- Event Listeners ---------------------------------
-calculateBtn.addEventListener("click", calculateIV);
-addRowBtn.addEventListener("click", addOptionRowsPair);
-graphBtn.addEventListener("click", showGraph);
-themeToggleBtn.addEventListener("click", toggleTheme);
-disclaimerBtn.addEventListener("click", showDisclaimer);
+if (calculateBtn) calculateBtn.addEventListener("click", calculateIV);
+if (addRowBtn) addRowBtn.addEventListener("click", addOptionRowsPair);
+if (graphBtn) graphBtn.addEventListener("click", showGraph);
+if (themeToggleBtn) themeToggleBtn.addEventListener("click", toggleTheme);
+if (disclaimerBtn) disclaimerBtn.addEventListener("click", showDisclaimer);
 
 // --------------- Initialize App ----------------------------------
 initTheme();
 createOptionRows();
 restoreCalculatorState();
 
-document.addEventListener
-("contextmenu",function(e)
-{
-  e.preventDefault()
-},false)
+// disable right-click context menu
+document.addEventListener("contextmenu", function(e) {
+  e.preventDefault();
+}, false);
