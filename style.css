@@ -40,6 +40,73 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
+/* WebKaushal Scrolling Banner Styles */
+:root {
+  --wk-bg: #121212;
+  --wk-fg: #ffffff;
+  --wk-accent: #22c55e;
+  --wk-shadow: 0 10px 30px rgba(0,0,0,.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Poppins", sans-serif; }
+
+/* Banner */
+.wk-banner {
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  background: var(--wk-bg);
+  color: var(--wk-fg);
+  box-shadow: var(--wk-shadow);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  overflow: hidden;
+}
+
+.wk-banner__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+}
+
+/* Scrolling Text */
+.wk-banner__marquee {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.wk-banner__marquee span {
+  display: inline-block;
+  padding-left: 100%;
+  font-size: clamp(0.9rem, 1vw + 0.6rem, 1.1rem);
+  color: var(--wk-fg);
+  animation: marquee 15s linear infinite;
+}
+
+.wk-banner__marquee strong {
+  color: var(--wk-accent);
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Close Button */
+.wk-banner__close {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.wk-banner__close:hover { background: rgba(255,255,255,.2); }
+.wk-banner__close svg path { fill: #e5e7eb; }
+
 /* Header */
 .header {
   background: var(--header-bg);
